@@ -1,0 +1,52 @@
+name: Build WASEEM MEDICAL PRO APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Flutter project
+        run: |
+          set -e
+
+          mkdir -p extracted
+
+          unzip -q WASEEM_MEDICAL_PRO_FULL_PROJECT.zip -d extracted
+
+          if [ -f extracted/pubspec.yaml ]; then
+            cp -a extracted/. .
+          else
+            PROJECT_DIR=$(find extracted -name pubspec.yaml -type f -print -quit | xargs dirname)
+            cp -a "$PROJECT_DIR"/. .
+          fi
+
+          echo "Project files:"
+          ls -la
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.2'
+          channel: stable
+          cache: true
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WASEEM-MEDICAL-PRO-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
